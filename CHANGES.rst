@@ -4,6 +4,12 @@ Changes
 v 1.28.0 (current)
 ==================
 
+https://github.com/atviriduomenys/katalogas/issues/2873
+
+- Show agreements in a use case's history as "Sutartis su {data provider} ({status})", with the status
+  name instead of its code, and agreement documents by their file name. Entries saved before keep their
+  old text.
+
 https://github.com/atviriduomenys/dvms/issues/513
 
 - Escape Mermaid/HTML-structural characters (`` ` ``, ``"``, ``{``, ``}``, ``<``, ``>`` and newlines)

@@ -4,7 +4,7 @@ import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.exceptions import ValidationError
 
-from vitrina.smart_contracts.factories import AgreementFileFactory
+from vitrina.smart_contracts.factories import AgreementFactory, AgreementFileFactory
 from vitrina.smart_contracts.models import SmartContractTemplate, Agreement
 from vitrina.orgs.factories import OrganizationFactory
 
@@ -54,3 +54,13 @@ class TestAgreement:
         AgreementFileFactory(agreement=agreement, file_extension="md")
 
         assert agreement.latest_agreement_adoc is None
+
+    def test_str_shows_data_provider_and_status_label(self):
+        agreement = AgreementFactory(assigner=OrganizationFactory(title="Registrų centras"))
+
+        assert str(agreement) == "Sutartis su Registrų centras (Sukurta)"
+
+    def test_file_str_is_file_name(self, agreement: Agreement):
+        agreement_file = AgreementFileFactory(agreement=agreement, file_name="sutartis.adoc")
+
+        assert str(agreement_file) == "sutartis.adoc"

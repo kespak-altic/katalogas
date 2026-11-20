@@ -120,7 +120,9 @@ class Agreement(UUIDBaseModel):
         verbose_name_plural = _("Sutartys")
 
     def __str__(self) -> str:
-        return f"{self.project} - {self.assigner} sutartis. Statusas: {self.status}"
+        return _("Sutartis su {organization} ({status})").format(
+            organization=self.assigner, status=self.get_status_display()
+        )
 
     def get_acl_parents(self) -> list["Agreement"]:
         return [self]
@@ -327,7 +329,7 @@ class AgreementFile(UUIDBaseModel):
         verbose_name_plural = _("Sutarties dokumentai")
 
     def __str__(self) -> str:
-        return f"{self.agreement} - {self.file_name}"
+        return self.file_name or os.path.basename(self.file.name)
 
     def save(self, *args, **kwargs):
         if self.file and not self.checksum:

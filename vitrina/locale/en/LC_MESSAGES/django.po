@@ -5167,6 +5167,9 @@ msgstr "Payment terms"
 msgid "Sutartis: {organization}"
 msgstr "Agreement: {organization}"
 
+msgid "Sutartis su {organization} ({status})"
+msgstr "Agreement with {organization} ({status})"
+
 msgid "Sutartis neturi sugeneruoto ODRL JSON failo."
 msgstr "The agreement does not have a generated ODRL JSON file."
 

@@ -275,12 +275,12 @@ def test_project_history_view_with_permission(app: DjangoTestApp):
     form["description"] = "Updated description"
     resp = form.submit().follow()
     with reversion.create_revision():
-        agreement_file = AgreementPDFFileFactory(agreement__project=project)
+        agreement_file = AgreementPDFFileFactory(agreement__project=project, file_name="sutartis.pdf")
         scope = UseCaseClientScopeFactory(use_case_client__use_case=project)
 
     action_objects = [
-        (str(agreement_file.agreement), None),
-        (str(agreement_file), None),
+        (f"Sutartis su {agreement_file.agreement.assigner} (Sukurta)", None),
+        ("sutartis.pdf", None),
         (str(scope.use_case_client), None),
         (str(scope), None),
     ]
