@@ -4,6 +4,11 @@ Changes
 v 1.28.0 (current)
 ==================
 
+https://github.com/atviriduomenys/katalogas/issues/2057
+
+- Once both parties have signed an agreement, list only the document signed by both on the agreement
+  page, not also the one signed by the data recipient alone.
+
 https://github.com/atviriduomenys/dvms/issues/513
 
 - Escape Mermaid/HTML-structural characters (`` ` ``, ``"``, ``{``, ``}``, ``<``, ``>`` and newlines)

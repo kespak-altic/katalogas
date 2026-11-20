@@ -104,12 +104,19 @@ class BaseAgreementDetailView(BaseAgreementMixin, LoginRequiredMixin, Permission
 
     def get_context_data(self, **kwargs: Any) -> dict:
         context = super().get_context_data(**kwargs)
+        # Once both parties have signed, the document signed by the recipient alone is no longer shown.
+        latest_adoc = self.agreement.latest_agreement_adoc
+        agreement_files = [
+            agreement_file
+            for agreement_file in self.agreement.files.all().order_by("-created_at")
+            if agreement_file.file_extension != AgreementFile.AllowedFileTypes.ADOC or agreement_file == latest_adoc
+        ]
 
         context.update(
             {
                 "agreement": self.agreement,
                 "project": self.agreement.project,
-                "agreement_files": self.agreement.files.all().order_by("-created_at"),
+                "agreement_files": agreement_files,
                 "agreement_status_descriptions": AGREEMENT_STATUS_DESCRIPTIONS,
                 "page_title": self.agreement.detail_page_title,
                 "parent": self.parent,

@@ -18,7 +18,12 @@ from vitrina.orgs.factories import OrganizationFactory, RepresentativeFactory, V
 from vitrina.orgs.models import Organization, Representative
 from vitrina.projects.factories import ProjectFactory
 from vitrina.smart_contracts import AgreementStatuses
-from vitrina.smart_contracts.factories import AgreementFactory, AgreementPDFFileFactory, AgreementJSONFileFactory
+from vitrina.smart_contracts.factories import (
+    AgreementFactory,
+    AgreementFileFactory,
+    AgreementJSONFileFactory,
+    AgreementPDFFileFactory,
+)
 from vitrina.smart_contracts.models import (
     Agreement,
     AgreementScope,
@@ -135,6 +140,22 @@ class TestProjectBasedAgreementDetailView:
         response = app.get(reverse("project-agreement-detail", args=[project.pk, agreement.pk]))
         assert response.status_code == 200
         assert response.context["agreement"] == agreement
+
+    def test_signed_agreement_lists_only_document_signed_by_both(
+        self, app: DjangoTestApp, organization: Organization, dataset: Dataset
+    ) -> None:
+        user = UserFactory(organization=organization)
+        RepresentativeFactory(user=user, content_object=organization)
+        app.set_user(user)
+        project = ProjectFactory(organization=organization, datasets=[dataset])
+        agreement = AgreementFactory(project=project, assigner=organization, status=AgreementStatuses.SIGNED)
+        pdf = AgreementPDFFileFactory(agreement=agreement)
+        AgreementFileFactory(agreement=agreement)
+        signed_by_both = AgreementFileFactory(agreement=agreement)
+
+        response = app.get(reverse("project-agreement-detail", args=[project.pk, agreement.pk]))
+
+        assert set(response.context["agreement_files"]) == {pdf, signed_by_both}
 
 
 class TestAgreementCreateView:
