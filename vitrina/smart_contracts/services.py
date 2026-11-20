@@ -23,8 +23,10 @@ from vitrina.smart_contracts.utils import (
     get_pdf_path_in_adoc,
     generate_checksum,
 )
+from vitrina.api.oauth import OAuthClientManagement
+from vitrina.projects.models import UseCaseClientScope
 from vitrina.users.models import User
-from vitrina.smart_contracts.models import Agreement, AgreementStatuses
+from vitrina.smart_contracts.models import Agreement, AgreementScope, AgreementStatuses
 from django.db.models import Q, QuerySet
 from django.utils.translation import gettext_lazy as _
 
@@ -224,3 +226,23 @@ def get_agreements(user: User) -> QuerySet[Agreement]:
     queryset = Agreement.objects.filter(Q(assignee_id__in=represented_org_ids) | Q(assigner_id__in=represented_org_ids))
 
     return queryset
+
+
+def revoke_agreement_scopes(agreement: Agreement) -> None:
+    """Remove the agreement's scopes from its use case's clients, unless another valid agreement grants them.
+
+    The clients are then updated on the authorization server, which raises `requests.RequestException` on failure.
+    """
+    still_granted = AgreementScope.objects.filter(
+        agreement__project=agreement.project,
+        agreement__status__in=(AgreementStatuses.SIGNED, AgreementStatuses.ACTIVE),
+    ).exclude(agreement=agreement)
+    revoked = agreement.scopes.exclude(scope__in=still_granted.values("scope")).values("scope")
+    UseCaseClientScope.objects.filter(use_case_client__use_case=agreement.project, scope__in=revoked).delete()
+
+    # Every client is updated, so a retry after a failure brings all of them up to date.
+    for client in agreement.project.client_set.all():
+        OAuthClientManagement.update_oauth_client(
+            client_id=client.client_id,
+            new_scopes=list(client.scopes.filter(is_active=True).values_list("scope", flat=True)),
+        )

@@ -139,6 +139,26 @@ class AgreementFormForm(BaseAgreementForm):
         fields = tuple()
 
 
+class AgreementRejectForm(BaseAgreementForm):
+    label = _("Atmesti sutartį")
+
+    class Meta:
+        model = Agreement
+        fields = ("status_reason",)
+
+
+class AgreementTerminateForm(BaseAgreementForm):
+    label = _("Nutraukti sutartį")
+
+    class Meta:
+        model = Agreement
+        fields = ("status_reason",)
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["status_reason"].required = True
+
+
 class BaseAgreementInitiateSignForm(BaseAgreementForm):
     class Meta:
         model = AgreementFile

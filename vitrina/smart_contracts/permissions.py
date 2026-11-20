@@ -69,3 +69,22 @@ def can_initiate_agreements(user: User, agreement: Agreement) -> bool:
 
 def can_sign_agreements(user: User, agreement: Agreement) -> bool:
     return _is_viisp_authenticated_and_representative(user, agreement.assigner)
+
+
+def _can_end_agreement(user: User | AnonymousUser, agreement: Agreement) -> bool:
+    # Staff and superusers may end any agreement without representing either party.
+    if not user.is_authenticated:
+        return False
+    if user.is_staff or user.is_superuser:
+        return True
+    return any(
+        _is_viisp_authenticated_and_representative(user, party) for party in (agreement.assignee, agreement.assigner)
+    )
+
+
+def can_reject_agreements(user: User | AnonymousUser, agreement: Agreement) -> bool:
+    return _can_end_agreement(user, agreement)
+
+
+def can_terminate_agreements(user: User | AnonymousUser, agreement: Agreement) -> bool:
+    return _can_end_agreement(user, agreement)

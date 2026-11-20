@@ -43,12 +43,16 @@ from vitrina.smart_contracts.mixins import (
     AgreementApproveMixin,
     AgreementSignMixin,
     AgreementFormMixin,
+    AgreementRejectMixin,
+    AgreementTerminateMixin,
 )
 from vitrina.smart_contracts.models import Agreement
 from vitrina.smart_contracts.permissions import (
     can_approve_agreements,
     can_form_agreements,
+    can_reject_agreements,
     can_sign_agreements,
+    can_terminate_agreements,
     can_upload_agreement_file,
 )
 from vitrina.smart_contracts.services import get_agreements
@@ -805,12 +809,13 @@ class OrganizationBasedAgreementListView(OrganizationBaseViewMixin, PlanMixin, B
                     When(status=AgreementStatuses.SUBMITTED, then=0),
                     When(status=AgreementStatuses.APPROVED, then=1),
                     When(status=AgreementStatuses.INITIATED, then=2),
-                    When(status=AgreementStatuses.ACTIVE, then=3),
-                    When(status=AgreementStatuses.SIGNED, then=4),
-                    When(status=AgreementStatuses.CREATED, then=5),
-                    When(status=AgreementStatuses.FORMED, then=6),
-                    When(status=AgreementStatuses.TERMINATED, then=7),
-                    default=8,
+                    When(status=AgreementStatuses.TERMINATING, then=3),
+                    When(status=AgreementStatuses.ACTIVE, then=4),
+                    When(status=AgreementStatuses.SIGNED, then=5),
+                    When(status=AgreementStatuses.CREATED, then=6),
+                    When(status=AgreementStatuses.FORMED, then=7),
+                    When(status__in=(AgreementStatuses.TERMINATED, AgreementStatuses.REJECTED), then=8),
+                    default=9,
                     output_field=IntegerField(),
                 )
             )
@@ -848,6 +853,8 @@ class OrganizationBasedAgreementDetailView(OrganizationBaseViewMixin, BaseAgreem
                 "can_form_agreements": can_form_agreements(self.request.user, self.agreement),
                 "can_initiate_agreements": False,  # Assignee action, assigner is not able to execute it.
                 "can_sign_agreements": can_sign_agreements(self.request.user, self.agreement),
+                "can_reject_agreements": can_reject_agreements(self.request.user, self.agreement),
+                "can_terminate_agreements": can_terminate_agreements(self.request.user, self.agreement),
                 "can_upload_agreement_file": can_upload_agreement_file(self.request.user, self.agreement),
             }
         )
@@ -903,6 +910,14 @@ class OrganizationBasedAgreementFormView(AgreementFormMixin, OrganizationBasedAg
 
 class OrganizationBasedAgreementSignView(AgreementSignMixin, OrganizationBasedAgreementNegotiateMixin):
     """Organization-based agreement form view responsible for moving the agreement to status `SIGNED`"""
+
+
+class OrganizationBasedAgreementRejectView(AgreementRejectMixin, OrganizationBasedAgreementNegotiateMixin):
+    """Organization-based agreement form view responsible for moving the agreement to status `REJECTED`"""
+
+
+class OrganizationBasedAgreementTerminateView(AgreementTerminateMixin, OrganizationBasedAgreementNegotiateMixin):
+    """Organization-based agreement form view responsible for moving the agreement to status `TERMINATED`"""
 
 
 class OrganizationUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):

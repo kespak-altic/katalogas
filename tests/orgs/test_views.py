@@ -1463,11 +1463,13 @@ class TestOrganizationBasedAgreementList:
             AgreementStatuses.SUBMITTED: 0,
             AgreementStatuses.APPROVED: 1,
             AgreementStatuses.INITIATED: 2,
-            AgreementStatuses.ACTIVE: 3,
-            AgreementStatuses.SIGNED: 4,
-            AgreementStatuses.CREATED: 5,
-            AgreementStatuses.FORMED: 6,
-            AgreementStatuses.TERMINATED: 7,
+            AgreementStatuses.TERMINATING: 3,
+            AgreementStatuses.ACTIVE: 4,
+            AgreementStatuses.SIGNED: 5,
+            AgreementStatuses.CREATED: 6,
+            AgreementStatuses.FORMED: 7,
+            AgreementStatuses.TERMINATED: 8,
+            AgreementStatuses.REJECTED: 8,
         }
 
         representative = RepresentativeFactory(content_object=organization)
@@ -1493,7 +1495,7 @@ class TestOrganizationBasedAgreementList:
 
         expected_agreement_order = sorted(
             agreements,
-            key=lambda agreement: (status_priority.get(agreement.status, 8), agreement.created_at),
+            key=lambda agreement: (status_priority.get(agreement.status, 9), agreement.created_at),
         )
         ordered_expected_agreement_ids = [agreement.uuid for agreement in expected_agreement_order]
 
@@ -1503,7 +1505,8 @@ class TestOrganizationBasedAgreementList:
         # Assert
         assert response.status_code == 200
         response_agreement_ids = [item.uuid for item in response.context["agreements"]]
-        assert response_agreement_ids == ordered_expected_agreement_ids
+        # The list shows 10 agreements per page.
+        assert response_agreement_ids == ordered_expected_agreement_ids[:10]
 
     def test_list_agreements_as_superuser(self, app: DjangoTestApp, organization: Organization):
         user = UserFactory(is_superuser=True)

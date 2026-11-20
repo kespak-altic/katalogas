@@ -32,7 +32,9 @@ from vitrina.smart_contracts.mixins import (
     AgreementApproveMixin,
     AgreementFormMixin,
     AgreementInitiateMixin,
+    AgreementRejectMixin,
     AgreementSignMixin,
+    AgreementTerminateMixin,
 )
 from vitrina.smart_contracts.models import Agreement, AgreementScope, AgreementFile
 from vitrina.users.models import User
@@ -48,7 +50,9 @@ from vitrina.smart_contracts.permissions import (
     can_approve_agreements,
     can_form_agreements,
     can_initiate_agreements,
+    can_reject_agreements,
     can_sign_agreements,
+    can_terminate_agreements,
 )
 
 
@@ -178,6 +182,8 @@ class ProjectBasedAgreementDetailView(BaseProjectMixin, BaseAgreementDetailView)
                 "can_form_agreements": can_form_agreements(self.request.user, self.agreement),
                 "can_initiate_agreements": can_initiate_agreements(self.request.user, self.agreement),
                 "can_sign_agreements": can_sign_agreements(self.request.user, self.agreement),
+                "can_reject_agreements": can_reject_agreements(self.request.user, self.agreement),
+                "can_terminate_agreements": can_terminate_agreements(self.request.user, self.agreement),
                 "can_upload_agreement_file": can_upload_agreement_file(self.request.user, self.agreement),
             }
         )
@@ -336,6 +342,14 @@ class ProjectBasedAgreementInitiateView(AgreementInitiateMixin, ProjectBasedAgre
 
 class ProjectBasedAgreementSignView(AgreementSignMixin, ProjectBasedAgreementNegotiateMixin):
     """Project-based agreement form view responsible for moving the agreement to status `SIGNED`"""
+
+
+class ProjectBasedAgreementRejectView(AgreementRejectMixin, ProjectBasedAgreementNegotiateMixin):
+    """Project-based agreement form view responsible for moving the agreement to status `REJECTED`"""
+
+
+class ProjectBasedAgreementTerminateView(AgreementTerminateMixin, ProjectBasedAgreementNegotiateMixin):
+    """Project-based agreement form view responsible for moving the agreement to status `TERMINATED`"""
 
 
 class AgreementFileDownloadView(

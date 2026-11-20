@@ -1,6 +1,8 @@
+import logging
 from pathlib import Path
 from typing import Any, Callable
 
+import requests
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.files.base import ContentFile
@@ -18,13 +20,15 @@ from django.views.generic import FormView
 from vitrina.datasets.models import Dataset
 from vitrina.helpers import get_file_extension, email
 from vitrina.projects.models import Project
-from vitrina.smart_contracts import AgreementStatuses
+from vitrina.smart_contracts import REJECTABLE_STATUSES, TERMINABLE_STATUSES, AgreementStatuses
 from vitrina.smart_contracts.forms import (
     AgreementSubmitForm,
     AgreementApproveForm,
     AgreementFormForm,
     AgreementInitiateForm,
+    AgreementRejectForm,
     AgreementSignForm,
+    AgreementTerminateForm,
 )
 from vitrina.smart_contracts.models import (
     Agreement,
@@ -35,10 +39,15 @@ from vitrina.smart_contracts.permissions import (
     can_approve_agreements,
     can_form_agreements,
     can_initiate_agreements,
+    can_reject_agreements,
     can_sign_agreements,
+    can_terminate_agreements,
 )
+from vitrina.smart_contracts.services import revoke_agreement_scopes
 from vitrina.users.models import User
 from vitrina.projects.views import ProjectViewBaseMixin
+
+logger = logging.getLogger(__name__)
 
 
 class BaseProjectMixin(ProjectViewBaseMixin):
@@ -111,13 +120,14 @@ class AgreementActionMixin:
         """Override in child classes for extra per-action logic."""
         return None
 
-    def validate_status(self, expected_status: AgreementStatuses) -> bool:
-        if self.agreement.status != expected_status:
+    def validate_status(self, expected_status: AgreementStatuses | tuple[AgreementStatuses, ...]) -> bool:
+        expected_statuses = expected_status if isinstance(expected_status, tuple) else (expected_status,)
+        if self.agreement.status not in expected_statuses:
             error_message = _(
                 "Veiksmas gali būti atliekamas tik sutarčiai esant būsenoje {expected_status}."
                 "Dabartinė būsena: {current_status}."
             ).format(
-                expected_status=expected_status,
+                expected_status=", ".join(expected_statuses),
                 current_status=self.agreement.status,
             )
             messages.error(self.request, error_message)
@@ -286,6 +296,84 @@ class AgreementSignMixin(AgreementUploadSignedFileMixin):
     def perform_action(self, form: ModelForm) -> None:
         super().perform_action(form)
         self.agreement.is_agent_sync_enabled = True
+
+
+class AgreementRejectMixin(AgreementActionMixin):
+    form_class = AgreementRejectForm
+    title = _("Atmesti sutartį")
+
+    expected_status = REJECTABLE_STATUSES
+    next_status = AgreementStatuses.REJECTED
+
+    success_message = _("Sutartis atmesta.")
+
+    def has_permission(self) -> bool:
+        return can_reject_agreements(self.request.user, self.agreement)
+
+    def perform_action(self, form: ModelForm) -> None:
+        self.agreement.status_reason = form.cleaned_data["status_reason"]
+
+
+class AgreementTerminateMixin(AgreementActionMixin):
+    form_class = AgreementTerminateForm
+    title = _("Nutraukti sutartį")
+
+    expected_status = TERMINABLE_STATUSES
+
+    def has_permission(self) -> bool:
+        return can_terminate_agreements(self.request.user, self.agreement)
+
+    @transaction.atomic
+    def form_valid(self, form: ModelForm) -> HttpResponse:
+        if not self.validate_status(self.expected_status):
+            return HttpResponseRedirect(self.get_success_url())
+
+        self.agreement.status = AgreementStatuses.TERMINATING
+        self.agreement.status_reason = form.cleaned_data["status_reason"]
+        self.agreement.is_agent_sync_enabled = False
+        self.agreement.save()
+        try:
+            revoke_agreement_scopes(self.agreement)
+        except requests.RequestException:
+            logger.exception("Could not revoke the scopes of agreement %s", self.agreement.pk)
+            messages.error(
+                self.request,
+                _(
+                    "Sutartis nutraukiama, tačiau leidimų nepavyko atšaukti autentifikacijos serveryje. "
+                    "Pabandykite nutraukti sutartį dar kartą vėliau."
+                ),
+            )
+            return HttpResponseRedirect(self.get_success_url())
+
+        self.agreement.status = AgreementStatuses.TERMINATED
+        self.agreement.save()
+        self.notify_parties()
+        messages.success(self.request, _("Sutartis nutraukta."))
+        return HttpResponseRedirect(self.get_success_url())
+
+    def notify_parties(self) -> None:
+        links = {
+            self.agreement.assignee: reverse(
+                "project-agreement-detail", args=[self.agreement.project_id, self.agreement.pk]
+            ),
+            self.agreement.assigner: reverse(
+                "organization-agreement-detail", args=[self.agreement.assigner_id, self.agreement.pk]
+            ),
+        }
+        for organization, link in links.items():
+            if organization.email:
+                email(
+                    [organization.email],
+                    "agreement-terminated",
+                    "vitrina/smart_contracts/emails/agreement_terminated.md",
+                    {
+                        "project": self.agreement.project.title,
+                        "assigner": self.agreement.assigner.title,
+                        "assignee": self.agreement.assignee.title,
+                        "reason": self.agreement.status_reason,
+                        "link": self.request.build_absolute_uri(link),
+                    },
+                )
 
 
 class ProjectBasedAgreementNegotiateMixin(BaseProjectMixin, AgreementNegotiateMixin):

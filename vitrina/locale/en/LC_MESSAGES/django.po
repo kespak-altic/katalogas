@@ -5065,6 +5065,44 @@ msgstr "Agreement is successfully synchronized with agent."
 msgid "Sutartis nutraukta."
 msgstr "Agreement is terminated."
 
+msgid "Nutraukiama"
+msgstr "Terminating"
+
+msgid ""
+"Sutartis nutraukiama: laukiama, kol autentifikacijos serveris patvirtins "
+"leidimų atšaukimą."
+msgstr ""
+"Agreement is being terminated: waiting for the authorization server to "
+"confirm that the permissions are revoked."
+
+msgid "Sutartis atmesta jos nepasirašius."
+msgstr "Agreement was rejected before it was signed."
+
+msgid "Priežastis"
+msgstr "Reason"
+
+msgid "Kodėl sutartis atmesta arba nutraukta."
+msgstr "Why the agreement was rejected or terminated."
+
+msgid "Atmesti sutartį"
+msgstr "Reject agreement"
+
+msgid "Nutraukti sutartį"
+msgstr "Terminate agreement"
+
+msgid "Sutartis atmesta."
+msgstr "Agreement is rejected."
+
+msgid ""
+"Sutartis nutraukiama, tačiau leidimų nepavyko atšaukti autentifikacijos "
+"serveryje. Pabandykite nutraukti sutartį dar kartą vėliau."
+msgstr ""
+"The agreement is being terminated, but the permissions could not be revoked "
+"on the authorization server. Try terminating the agreement again later."
+
+msgid "Pakartoti nutraukimą"
+msgstr "Retry termination"
+
 msgid "Išmaniųjų sutarčių numatytasis šablonas"
 msgstr "Smart contracts default template"
 

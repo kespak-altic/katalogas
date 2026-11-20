@@ -34,6 +34,8 @@ from vitrina.orgs.views import (
     OrganizationBasedAgreementApproveView,
     OrganizationBasedAgreementFormView,
     OrganizationBasedAgreementSignView,
+    OrganizationBasedAgreementRejectView,
+    OrganizationBasedAgreementTerminateView,
 )
 from vitrina.orgs.views import (
     OrganizationDetailView,
@@ -169,6 +171,16 @@ urlpatterns = [
         "orgs/<int:pk>/agreements/<uuid:agreement_id>/sign",
         OrganizationBasedAgreementSignView.as_view(),
         name="organization-agreement-sign",
+    ),
+    path(
+        "orgs/<int:pk>/agreements/<uuid:agreement_id>/reject",
+        OrganizationBasedAgreementRejectView.as_view(),
+        name="organization-agreement-reject",
+    ),
+    path(
+        "orgs/<int:pk>/agreements/<uuid:agreement_id>/terminate",
+        OrganizationBasedAgreementTerminateView.as_view(),
+        name="organization-agreement-terminate",
     ),
     path(
         "register/<token>/",

@@ -4,6 +4,26 @@ Changes
 v 1.28.0 (current)
 ==================
 
+https://github.com/atviriduomenys/katalogas/issues/2060
+
+- Reject an agreement before both parties have signed it (``REJECTED``), with an optional reason. Any
+  status from ``CREATED`` to ``INITIATED`` can be rejected.
+- Representatives of either party who are logged in through VIISP and may make agreements, staff users
+  and superusers may reject an agreement, on the use case page and on the data provider's
+  organization page.
+
+https://github.com/atviriduomenys/katalogas/issues/2059
+
+- Terminate a signed or active agreement (``TERMINATED``), with a required reason. The same users who may
+  reject an agreement may terminate it.
+- On termination, the agreement's scopes are removed from the use case's clients, unless another signed
+  or active agreement of the use case grants them, and the clients are updated on the authorization
+  server. Agent sync is turned off for the agreement, so it is no longer listed for the agent.
+- The agreement stays ``TERMINATING`` until the authorization server confirms the update, and the
+  termination can be retried from that status. Both parties are notified by email once it is
+  ``TERMINATED``.
+- Show the reason of a rejected or terminated agreement on its page.
+
 https://github.com/atviriduomenys/dvms/issues/513
 
 - Escape Mermaid/HTML-structural characters (`` ` ``, ``"``, ``{``, ``}``, ``<``, ``>`` and newlines)

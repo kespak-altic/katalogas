@@ -10,7 +10,21 @@ class AgreementStatuses(TextChoices):
     INITIATED = "INITIATED", _("Inicijuota")
     SIGNED = "SIGNED", _("Pasirašyta")
     ACTIVE = "ACTIVE", _("Aktyvi")
+    TERMINATING = "TERMINATING", _("Nutraukiama")
     TERMINATED = "TERMINATED", _("Nutraukta")
+    REJECTED = "REJECTED", _("Atmesta")
+
+
+# Any status before both parties have signed.
+REJECTABLE_STATUSES = (
+    AgreementStatuses.CREATED,
+    AgreementStatuses.SUBMITTED,
+    AgreementStatuses.APPROVED,
+    AgreementStatuses.FORMED,
+    AgreementStatuses.INITIATED,
+)
+# A termination still in progress can be repeated until the authorization server confirms it.
+TERMINABLE_STATUSES = (AgreementStatuses.SIGNED, AgreementStatuses.ACTIVE, AgreementStatuses.TERMINATING)
 
 
 AGREEMENT_STATUS_DESCRIPTIONS = {
@@ -21,5 +35,9 @@ AGREEMENT_STATUS_DESCRIPTIONS = {
     AgreementStatuses.INITIATED: _("Sutarties dokumentas pasirašytas duomenų gavėjo."),
     AgreementStatuses.SIGNED: _("Sutarties dokumentas pasirašytas duomenų gavėjo ir duomenų teikėjo."),
     AgreementStatuses.ACTIVE: _("Sutartis sėkmingai sinchronizuota su agentu."),
+    AgreementStatuses.TERMINATING: _(
+        "Sutartis nutraukiama: laukiama, kol autentifikacijos serveris patvirtins leidimų atšaukimą."
+    ),
     AgreementStatuses.TERMINATED: _("Sutartis nutraukta."),
+    AgreementStatuses.REJECTED: _("Sutartis atmesta jos nepasirašius."),
 }

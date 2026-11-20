@@ -15,7 +15,7 @@ from slugify import slugify
 from vitrina.helpers import get_file_extension
 from vitrina.models import UUIDBaseModel
 from vitrina.projects.models import Project
-from vitrina.smart_contracts import AgreementStatuses
+from vitrina.smart_contracts import REJECTABLE_STATUSES, TERMINABLE_STATUSES, AgreementStatuses
 from vitrina.smart_contracts.utils import (
     format_lithuanian_datetime,
     generate_checksum,
@@ -99,6 +99,9 @@ class Agreement(UUIDBaseModel):
         choices=AgreementStatuses.choices,
         default=AgreementStatuses.CREATED,
         verbose_name=_("Būsena"),
+    )
+    status_reason = models.TextField(
+        blank=True, default="", verbose_name=_("Priežastis"), help_text=_("Kodėl sutartis atmesta arba nutraukta.")
     )
     is_agent_sync_enabled = models.BooleanField(default=False, verbose_name=_("Agento sinchronizacija įjungta"))
     last_sync_date = models.DateTimeField(null=True, blank=True, verbose_name=_("Paskutinės sinchronizacijos data"))
@@ -203,6 +206,14 @@ class Agreement(UUIDBaseModel):
             "ex:otherAssignerLegislations": self.other_assigner_legislations or NON_VALUE,
             "ex:otherAssigneeLegislations": self.project.other_assignee_legislations or NON_VALUE,
         }
+
+    @property
+    def can_be_rejected(self) -> bool:
+        return self.status in REJECTABLE_STATUSES
+
+    @property
+    def can_be_terminated(self) -> bool:
+        return self.status in TERMINABLE_STATUSES
 
     @property
     def detail_page_title(self) -> str:

@@ -32,5 +32,19 @@
                 {% translate "Įkelti pasirašytą dokumentą (Teikėjo)" %}
             </a>
         {% endif %}
+        {% if can_reject_agreements and agreement.can_be_rejected %}
+            <a href="{% url "organization-agreement-reject" organization.pk agreement.pk %}" class="button is-danger is-outlined m-t-xs m-b-lg">
+                {% translate "Atmesti" %}
+            </a>
+        {% endif %}
+        {% if can_terminate_agreements and agreement.can_be_terminated %}
+            <a href="{% url "organization-agreement-terminate" organization.pk agreement.pk %}" class="button is-danger is-outlined m-t-xs m-b-lg">
+                {% if agreement.status == "TERMINATING" %}
+                    {% translate "Pakartoti nutraukimą" %}
+                {% else %}
+                    {% translate "Nutraukti sutartį" %}
+                {% endif %}
+            </a>
+        {% endif %}
     </div>
 {% endblock %}
